@@ -34,7 +34,8 @@ def Mint():
     mint = {'id': request_json['id'], 'bitmap': request_json['bitmap']}
     minted.append(mint)
     json_dump = json.dumps(minted)
-    os.system('python image_generation.py 1 2')
+    os.system('python scripts/image_generation.py' + ' ' + str(request_json['id']) + ' ' + str(request_json['bitmap']))
+    print("test")
     return json_dump
 
 
