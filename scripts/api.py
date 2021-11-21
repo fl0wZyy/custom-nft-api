@@ -64,7 +64,7 @@ def ReturnById():
             "external_url": parser.get('Website', 'Address'),
             "attributes": attributes
         }
-        json_dump = json.dumps(metadata)
+        json_dump = json.dumps(metadata, sort_keys=False)
         return json_dump
     else:
         return make_response(jsonify("The Requested Friendly Frog is Out of Range"), 404)
