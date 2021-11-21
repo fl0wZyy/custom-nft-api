@@ -1,51 +1,63 @@
 ## Installation
 
-To install all the required dependencies and start the API server please ensure both Python and Pip are set as an environment variable. Running setup.bat will automatically install dependencies required to run the API server as well as initialize an NGROK redirect for the API's public use.
+To install all the required dependencies and start the API server please ensure both Python and Pip are set as an environment variable. Running Friendly Frogs.bat will automatically install dependencies required to run the API server as well as initialize an NGROK redirect for the API's public use.
 
-## API
+## Setup
 
-### Index
+### Base Metadata
 
-```python
-@app.route('/', methods=['GET'])
-def ReturnAll():
-    json_dump = json.dumps(minted)
-    return json_dump
-
-```
-
-The index endpoint simply returns all of the minted NFTs in JSON format.
-
-### /id/
+Please ensure that the metadata for the NFT is stored as a JSON file under the folder Metadata. Follow the format of the test file included in the repo. Ensure that the data does not contain a reference to any IPFS hashes. Also, please ensure to change the following code in scripts/api.py to match your attributes/traits.
 
 ```python
-@app.route('/id/', methods=['GET'])
-def ReturnById():
-    id_query = int(request.args.get('id'))
-    data_set = {minted[id_query]}
-    json_dump = json.dumps(data_set)
-    return json_dump
+attributes = [
+            {
+                "trait_type": "Health",
+                "value": trait["Health"]
+            },
+            {
+                "trait_type": "Attack Power",
+                "value": trait["Attack Power"]
+            },
+        ]
 ```
 
-The /id/ endpoint simply returns a minted NFT by specified ID.
 
-### /mint/
+### Base Images
 
-```python
-@app.route('/mint/', methods=['POST'])
-def Mint():
-    request_json = request.json
-    mint = {'id': request_json['id'], 'bitmap': request_json['bitmap']}
-    minted.append(mint)
-    json_dump = json.dumps(minted)
-    os.system('python image_generation.py 1 2')
-    return json_dump
+Please ensure all base images are stored under Assets/Base in a .png format and are named according to their tokend ID.
+
+
+### IPFS Hashes
+
+Under Metadata/images_ipfs you'll find a test JSON file containing some test values. Please clear this data set (do not delete the file) before pushing to production.
+
+### Config File
+
+Change all values in the config file to match your project specifications.
+
+### Use
+
+With the installation and setup now complete you are all set to go. Once running, NGROK will provide a fowarding address. 
+
+#### Metadata API
+Take this base address and add ```diff /id/?id=``` to the end to create the Base URI to be used in your contract. For example:```diff http://a17e-213-149-62-137.ngrok.io/id/?id=.``` It is important to note that permanent redirects can be purchased from NGROK to stop unwanted changes if the server goes down. 
+
+#### Minting API
+
+When minting on your website, and after completing ALL contract interactions, please send a POST request to the base forwarding address with the appendix /mint.  For example: ```diff http://a17e-213-149-62-137.ngrok.io/mint```. The post request should contain a package with the following structure:
+```json
+{
+    "bitmap": "#99FE9D#8BA12C#7C4660#917D35#DB5253....",
+    "id": 2
+}
 ```
 
-The /mint/ endpoint allows for communication between the website and the image generation infrastructure. The endpoint accepts a JSON with the id of the NFT, to be used for the base layer and a bitmap to be used to reconstruct the drawn layer. Once a request is successfully received, the script runs "image_generation.py" to use the passed data (id and bitmap) to construct the NFT image.
+Where a bitmap is a single string containing the hex values of the colors of all the 10x10 boxes in the drawing layer. 
 
-## Image Generation
-To be completed.
+
+#### Conclusion
+
+After setting up the POST request and the base URI, you're all set. Opensea will be able to retrieve meta data from your server with an average response time of 150 ms. For a more permanent solution, after sellout or after closing the minting function, you can upload the concatenated images to IPFS and set that folder as the base URI to remove the need for a running server.
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
