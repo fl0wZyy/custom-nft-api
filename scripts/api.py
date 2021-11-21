@@ -1,12 +1,24 @@
 import json
 import os
-from flask import *
 
-# Set the Flask App
+import web3.eth
+from flask import *
+from web3 import Web3
+
+# Set the Flask App and Establish Web3 Connection
 app = Flask(__name__)
+w3 = Web3(Web3.HTTPProvider('https://rinkeby.infura.io/v3/a072e4d6a7234aea95e73624b41de95d'))
+
+print(f'Web3 Connection: {w3.isConnected()}')
 
 # Initialize Minted Database
 minted = [{'id': 1, 'bitmap': 'test'}]
+
+# Connect Smart Contract
+contract_address = "0xd17c24717c95Ab1CA7b4Ca43807Ee3743D435a95"
+file = open('./data/abi.json')
+contract_abi = json.load(file)
+contract = w3.eth.contract(address=contract_address, abi=contract_abi)
 
 
 # Setting the API Endpoints
@@ -22,9 +34,37 @@ def ReturnAll():
 @app.route('/id/', methods=['GET'])
 def ReturnById():
     id_query = int(request.args.get('id'))
-    data_set = {minted[id_query]}
-    json_dump = json.dumps(data_set)
-    return json_dump
+    total_supply = contract.functions.totalSupply().call()
+    if id_query < total_supply:
+        f = open('./metadata/traits.json')
+        traits_all = json.load(f)
+        trait = traits_all[id_query]
+        f = open('./metadata/images_ipfs/ipfs.json')
+        ipfs = json.load(f)
+        attributes = [
+            {
+                "trait_type": "Health",
+                "value": trait["Health"]
+            },
+            {
+                "trait_type": "Attack Power",
+                "value": trait["Attack Power"]
+            },
+        ]
+        token_name = f'Friendly Frog #{id_query}'
+        image_ipfs = ipfs[id_query]['imageIPFS']
+        metadata = {
+            "name": token_name,
+            "description": "Description",
+            "tokenId": id_query,
+            "image": f'https://gateway.pinata.cloud/ipfs/{image_ipfs}',
+            "external_url": "https://www.friendlyfrogs.com",
+            "attributes": attributes
+        }
+        json_dump = json.dumps(metadata)
+        return json_dump
+    else:
+        return make_response(jsonify("The Requested Friendly Frog is Out of Range"), 404)
 
 
 # Add An NFT to the Minted List
@@ -33,9 +73,10 @@ def Mint():
     request_json = request.json
     mint = {'id': request_json['id'], 'bitmap': request_json['bitmap']}
     minted.append(mint)
-    json_dump = json.dumps(minted)
-    os.system('python scripts/image_generation.py' + ' ' + str(request_json['id']) + ' ' + str(request_json['bitmap']))
-    print("test")
+    json_dump = json.dumps(mint)
+    with open(f'data/{request_json["id"]}.json', 'w') as f:
+        json.dump(mint, f, indent=4)
+    os.system(f"python scripts/image_generation.py {request_json['id']}")
     return json_dump
 
 
