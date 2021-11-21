@@ -65,7 +65,7 @@ def ReturnById():
             "attributes": attributes
         }
         json_dump = json.dumps(metadata, sort_keys=False)
-        return json_dump
+        return json_dump, 200, {'Content-Type': 'application/json'}
     else:
         return make_response(jsonify("The Requested Friendly Frog is Out of Range"), 404)
 
