@@ -1,13 +1,16 @@
 import json
 import os
-
-import web3.eth
 from flask import *
 from web3 import Web3
+import configparser
+
+# Initialize Config
+parser = configparser.ConfigParser()
+parser.read('./config.ini')
 
 # Set the Flask App and Establish Web3 Connection
 app = Flask(__name__)
-w3 = Web3(Web3.HTTPProvider('https://rinkeby.infura.io/v3/a072e4d6a7234aea95e73624b41de95d'))
+w3 = Web3(Web3.HTTPProvider(parser.get('Contract', 'Infura')))
 
 print(f'Web3 Connection: {w3.isConnected()}')
 
@@ -15,7 +18,7 @@ print(f'Web3 Connection: {w3.isConnected()}')
 minted = [{'id': 1, 'bitmap': 'test'}]
 
 # Connect Smart Contract
-contract_address = "0xd17c24717c95Ab1CA7b4Ca43807Ee3743D435a95"
+contract_address = parser.get('Contract', 'Address')
 file = open('./data/abi.json')
 contract_abi = json.load(file)
 contract = w3.eth.contract(address=contract_address, abi=contract_abi)
@@ -58,7 +61,7 @@ def ReturnById():
             "description": "Description",
             "tokenId": id_query,
             "image": f'https://gateway.pinata.cloud/ipfs/{image_ipfs}',
-            "external_url": "https://www.friendlyfrogs.com",
+            "external_url": parser.get('Website', 'Address'),
             "attributes": attributes
         }
         json_dump = json.dumps(metadata)

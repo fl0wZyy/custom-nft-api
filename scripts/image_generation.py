@@ -2,9 +2,15 @@ import random
 import sys
 import numpy as np
 import json
+import ipfs_upload
+import configparser
 
 import PIL.ImageColor
 from PIL import Image, ImageDraw, ImageColor
+
+# Initialize Config
+parser = configparser.ConfigParser()
+parser.read('./config.ini')
 
 
 def GetBitmap():
@@ -41,11 +47,26 @@ def Composite(nft_id):
     print(f'{nft_id} done')
 
 
+def Upload(nft_id):
+    handler = ipfs_upload.PinataPy(parser.get('Pinata', 'Key'), parser.get('Pinata', 'Secret'))
+    response = handler.pin_file_to_ipfs(f'./assets/output/{nft_id}.png')
+    ipfs_hash = response['IpfsHash']
+    with open('./metadata/images_ipfs/ipfs.json', 'r+') as file:
+        file_data = json.load(file)
+        file_data.append({
+            "imageIPFS": ipfs_hash,
+            "tokenId": nft_id
+        })
+        file.seek(0)
+        json.dump(file_data, file, indent=4)
+
+
 def main():
     nft_id, bitmap = GetBitmap()
     canvas = CreateCanvas((1000, 1000), (255, 255, 255))
     DrawLayer(canvas, bitmap, nft_id)
     Composite(nft_id)
+    Upload(nft_id)
 
 
 main()

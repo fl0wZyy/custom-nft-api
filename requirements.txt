@@ -3,3 +3,4 @@ Flask==2.0.2
 pillow~=8.4.0
 numpy~=1.21.4
 web3~=5.25.0
+requests~=2.26.0
